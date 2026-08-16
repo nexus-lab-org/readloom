@@ -308,11 +308,52 @@ export function pageTemplate({ title, breadcrumb, body }) {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 1rem;
     margin: 1.25rem 0;
-    display: flex;
-    justify-content: center;
+    position: relative;
+    height: 420px;
+    overflow: hidden;
   }
+  .doc .mermaid svg {
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+  }
+  .doc .mermaid svg:active { cursor: grabbing; }
+  .doc .mermaid.maximized {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    height: 100vh;
+    width: 100vw;
+    margin: 0;
+    border-radius: 0;
+  }
+  .mermaid-toolbar {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    z-index: 2;
+    display: flex;
+    gap: 0.3rem;
+  }
+  .mermaid-toolbar button {
+    width: 1.9rem;
+    height: 1.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--surface-2) 90%, transparent);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+  }
+  .mermaid-toolbar button:hover { color: var(--amber); border-color: var(--amber); }
+  .mermaid-toolbar button:focus-visible { outline: 2px solid var(--amber); outline-offset: 1px; }
 
   .code-view .view-toggle {
     font-family: var(--mono);
@@ -360,7 +401,63 @@ export function pageTemplate({ title, breadcrumb, body }) {
 <div class="prompt">${breadcrumb}</div>
 ${body}
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
-<script>mermaid.initialize({ startOnLoad: true, theme: 'dark' });</script>
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.2/dist/svg-pan-zoom.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+  mermaid.run({ querySelector: '.mermaid' }).then(() => {
+    document.querySelectorAll('.doc .mermaid').forEach((container) => {
+      const svg = container.querySelector('svg');
+      if (!svg) return;
+      svg.removeAttribute('width');
+      svg.removeAttribute('height');
+
+      const panZoom = svgPanZoom(svg, {
+        zoomEnabled: true,
+        controlIconsEnabled: false,
+        fit: true,
+        center: true,
+        minZoom: 0.5,
+        maxZoom: 10,
+      });
+
+      const toolbar = document.createElement('div');
+      toolbar.className = 'mermaid-toolbar';
+      toolbar.innerHTML =
+        '<button type="button" data-action="zoom-out" title="Zoom out">−</button>' +
+        '<button type="button" data-action="zoom-in" title="Zoom in">+</button>' +
+        '<button type="button" data-action="fit" title="Reset zoom">↻</button>' +
+        '<button type="button" data-action="maximize" title="Maximize">⛶</button>';
+      container.appendChild(toolbar);
+
+      const refit = () => {
+        panZoom.resize();
+        panZoom.fit();
+        panZoom.center();
+      };
+
+      toolbar.addEventListener('click', (event) => {
+        const button = event.target.closest('button');
+        if (!button) return;
+        const action = button.dataset.action;
+        if (action === 'zoom-in') panZoom.zoomIn();
+        else if (action === 'zoom-out') panZoom.zoomOut();
+        else if (action === 'fit') refit();
+        else if (action === 'maximize') {
+          const isMaximized = container.classList.toggle('maximized');
+          document.body.style.overflow = isMaximized ? 'hidden' : '';
+          button.innerHTML = isMaximized ? '✕' : '⛶';
+          button.title = isMaximized ? 'Restore' : 'Maximize';
+          requestAnimationFrame(refit);
+        }
+      });
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      document.querySelectorAll('.doc .mermaid.maximized [data-action="maximize"]').forEach((btn) => btn.click());
+    });
+  });
+</script>
 </body>
 </html>
 `;
