@@ -3,7 +3,7 @@ import { Marked } from "marked";
 
 const marked = new Marked({ gfm: true });
 
-const PROMPT_USER = process.env.PROMPT_USER || "asif@beacon";
+const PROMPT_USER = process.env.PROMPT_USER || "asif@readloom";
 const DOC_BADGES = new Set(["MISSION", "NOTES", "GLOSSARY", "RESOURCES"]);
 
 const FENCED_MERMAID_RE =
@@ -185,7 +185,7 @@ export function pageTemplate({ title, breadcrumb, body }) {
     margin-bottom: 1.5rem;
     border-bottom: 1px solid var(--border);
   }
-  .brand .beacon { color: var(--amber); }
+  .brand .brand-dot { color: var(--amber); }
   .brand .status { display: flex; align-items: center; gap: 0.4rem; }
   .brand .dot {
     width: 6px; height: 6px; border-radius: 50%;
@@ -354,7 +354,7 @@ export function pageTemplate({ title, breadcrumb, body }) {
 </head>
 <body>
 <div class="brand">
-  <span><span class="beacon">&#9679;</span> beacon</span>
+  <span><span class="brand-dot">&#9679;</span> readloom</span>
   <span class="status"><span class="dot"></span> local</span>
 </div>
 <div class="prompt">${breadcrumb}</div>

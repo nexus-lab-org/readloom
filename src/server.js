@@ -44,7 +44,7 @@ export function createApp(roots) {
   app.get("/", (_req, res) => {
     res.type("html").send(
       pageTemplate({
-        title: "beacon",
+        title: "readloom",
         breadcrumb: rootIndexBreadcrumb(),
         body: renderRootIndex([...roots.keys()]),
       })

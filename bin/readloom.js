@@ -26,7 +26,7 @@ const roots = loadRoots({ configPath, dirs: args.dirs });
 const app = createApp(roots);
 
 app.listen(port, () => {
-  console.log(`beacon serving ${roots.size} root(s) at http://localhost:${port}`);
+  console.log(`readloom serving ${roots.size} root(s) at http://localhost:${port}`);
   for (const [name, dir] of roots) {
     console.log(`  /${name}/ -> ${dir}`);
   }

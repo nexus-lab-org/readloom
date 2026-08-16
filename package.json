@@ -1,10 +1,10 @@
 {
-  "name": "beacon",
+  "name": "readloom",
   "version": "0.1.0",
   "description": "A generic, multi-root markdown/code/mermaid directory browser.",
   "type": "module",
   "bin": {
-    "beacon": "./bin/beacon.js"
+    "readloom": "./bin/readloom.js"
   },
   "main": "src/server.js",
   "license": "MIT",

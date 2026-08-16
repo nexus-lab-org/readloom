@@ -5,7 +5,7 @@ import yaml from "js-yaml";
 const ROOT_NAME_RE = /^[a-z0-9-]+$/;
 
 function fail(message) {
-  console.error(`beacon: ${message}`);
+  console.error(`readloom: ${message}`);
   process.exit(1);
 }
 

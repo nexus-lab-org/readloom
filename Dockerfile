@@ -10,4 +10,4 @@ ENV PORT=8000
 ENV ROOTS_CONFIG=/app/roots.yml
 EXPOSE 8000
 
-CMD ["node", "bin/beacon.js"]
+CMD ["node", "bin/readloom.js"]
