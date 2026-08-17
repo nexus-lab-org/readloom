@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>readloom — markdown/code/mermaid directory browser</title>
+<meta name="description" content="A generic, multi-root markdown/code/mermaid directory browser. Ships via npx and Docker.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0e14;
+    --surface: #131822;
+    --surface-2: #1a2130;
+    --border: #232a3a;
+    --text: #dfe4ee;
+    --text-dim: #7c8698;
+    --amber: #f5a623;
+    --blue: #5b9dff;
+    --violet: #b389f9;
+    --green: #4ade80;
+    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--bg); }
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+  }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--amber);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 0 1.25rem; }
+
+  header {
+    padding: 5rem 0 3.5rem;
+    border-bottom: 1px solid var(--border);
+    background:
+      radial-gradient(circle at 15% 20%, color-mix(in srgb, var(--amber) 8%, transparent), transparent 45%),
+      var(--bg);
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin: 0 0 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .eyebrow .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+  }
+  h1 {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: clamp(2.1rem, 6vw, 3rem);
+    letter-spacing: -0.01em;
+    margin: 0 0 0.9rem;
+  }
+  header p.tagline {
+    color: var(--text-dim);
+    font-size: 1.1rem;
+    max-width: 52ch;
+    margin: 0 0 2.25rem;
+  }
+
+  .terminal {
+    font-family: var(--mono);
+    font-size: 0.92rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+    max-width: 480px;
+    margin-bottom: 2rem;
+  }
+  .terminal .prompt { color: var(--green); }
+  .terminal .cmd { color: var(--text); }
+
+  .cta {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .btn {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    padding: 0.6rem 1.1rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .btn:hover { text-decoration: none; border-color: var(--amber); color: var(--amber); }
+  .btn.primary { background: var(--amber); border-color: var(--amber); color: #1a1206; font-weight: 600; }
+  .btn.primary:hover { background: color-mix(in srgb, var(--amber) 85%, white); color: #1a1206; }
+
+  section { padding: 3.5rem 0; border-bottom: 1px solid var(--border); }
+  section:last-of-type { border-bottom: none; }
+  h2 {
+    font-family: var(--mono);
+    font-size: 1.4rem;
+    margin: 0 0 1.5rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--amber);
+    display: inline-block;
+  }
+  section p { color: var(--text); max-width: 68ch; }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+  }
+  .feature {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.25rem;
+  }
+  .feature h3 {
+    font-family: var(--mono);
+    font-size: 0.95rem;
+    margin: 0 0 0.5rem;
+    color: var(--amber);
+  }
+  .feature p { color: var(--text-dim); font-size: 0.9rem; margin: 0; }
+
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+  }
+  code {
+    font-family: var(--mono);
+    background: var(--surface-2);
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    font-size: 0.88em;
+  }
+  pre code { background: none; padding: 0; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.25rem;
+    font-size: 0.88rem;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 0.55rem 0.8rem;
+    text-align: left;
+  }
+  th {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    background: var(--surface);
+  }
+  td code { font-size: 0.85em; }
+
+  footer {
+    padding: 2.5rem 0 4rem;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  footer a { color: var(--text-dim); }
+  footer a:hover { color: var(--amber); }
+</style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <p class="eyebrow"><span class="dot"></span> nexus-lab-org</p>
+      <h1>🧵 readloom</h1>
+      <p class="tagline">A generic, multi-root markdown/code/mermaid directory browser. Dark-themed, pannable Mermaid diagrams, editor-grade syntax highlighting — ships via <code>npx</code> and Docker.</p>
+      <div class="terminal"><span class="prompt">$</span> <span class="cmd">npx readloom ~/some-directory</span></div>
+      <div class="cta">
+        <a class="btn primary" href="#quick-start">Get started</a>
+        <a class="btn" href="https://github.com/nexus-lab-org/readloom">View on GitHub</a>
+        <a class="btn" href="https://www.npmjs.com/package/readloom">View on npm</a>
+      </div>
+    </div>
+  </header>
+
+  <section id="about">
+    <div class="wrap">
+      <h2>About</h2>
+      <p>readloom replaces the reflex of reaching for <code>python -m http.server</code> to browse a directory of notes. It renders markdown properly, turns fenced <code>```mermaid</code> blocks into pannable, zoomable diagrams, and gives source files an editor-grade syntax-highlighted view — all while keeping raw assets (<code>.js</code>, <code>.css</code>) referenced by your own <code>.html</code> pages working exactly as before.</p>
+      <p>One server instance can host any number of independent directories, each under its own named root, listed on a landing page.</p>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="wrap">
+      <h2>Features</h2>
+      <div class="features">
+        <div class="feature">
+          <h3>Markdown + Mermaid</h3>
+          <p>GitHub-flavored markdown, with Mermaid diagrams rendered pannable and zoomable — scroll to zoom, drag to pan, one click to maximize to fullscreen.</p>
+        </div>
+        <div class="feature">
+          <h3>Editor-grade highlighting</h3>
+          <p>Shiki-powered code view using real VS Code TextMate grammars, with line numbers, for any language it bundles.</p>
+        </div>
+        <div class="feature">
+          <h3>Multi-root</h3>
+          <p>Host several directories from one server via <code>roots.yml</code>, each under its own URL prefix, listed on the landing page.</p>
+        </div>
+        <div class="feature">
+          <h3>Asset-safe</h3>
+          <p>Bare file URLs always serve raw content, so <code>&lt;script src&gt;</code> and <code>&lt;link&gt;</code> references in your own pages never break.</p>
+        </div>
+        <div class="feature">
+          <h3>Fail-fast config</h3>
+          <p>A bad root name or a path that doesn't exist stops the server at startup with a clear error, not a silent 404 later.</p>
+        </div>
+        <div class="feature">
+          <h3>Docker or npx</h3>
+          <p>Same codebase, two ways to run it: a Docker image for volume-mounted directories, or zero-install <code>npx</code> for local use.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="quick-start">
+    <div class="wrap">
+      <h2>Quick start</h2>
+      <p>Serve a single directory — the root name is derived from its basename:</p>
+      <pre><code>npx readloom ~/some-directory</code></pre>
+      <p>Serve more than one at once:</p>
+      <pre><code>npx readloom ~/teach ~/some-other-project</code></pre>
+      <p>Or use a config file for named roots:</p>
+      <pre><code># roots.yml
+teach: /home/you/teach
+sentinel-services-design: /home/you/code/sentinel-services/docs/design</code></pre>
+      <pre><code>npx readloom --config roots.yml</code></pre>
+    </div>
+  </section>
+
+  <section id="cli">
+    <div class="wrap">
+      <h2>CLI options</h2>
+      <table>
+        <thead>
+          <tr><th>Flag</th><th>Env var</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>[dir ...]</code></td><td>—</td><td>—</td><td>One or more directories, root name auto-derived from the basename</td></tr>
+          <tr><td><code>--config</code>, <code>-c</code></td><td><code>ROOTS_CONFIG</code></td><td><code>./roots.yml</code> if present</td><td>Load named roots from a YAML config file</td></tr>
+          <tr><td><code>--port</code>, <code>-p</code></td><td><code>PORT</code></td><td><code>8000</code></td><td>Port to listen on</td></tr>
+          <tr><td>—</td><td><code>PROMPT_USER</code></td><td><code>asif@readloom</code></td><td>The <code>user@host</code> shown in the breadcrumb prompt</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="docker">
+    <div class="wrap">
+      <h2>Docker</h2>
+      <pre><code>docker build -t readloom .
+docker run -d --name readloom \
+  -v ~/teach:/docs/teach:ro \
+  -v ./roots.yml:/app/roots.yml:ro \
+  -p 8000:8000 --restart unless-stopped readloom</code></pre>
+      <p>Paths inside <code>roots.yml</code> are interpreted differently depending on how you run readloom: real host paths for <code>npx</code>/<code>node</code>, container-internal paths (with matching <code>-v</code> mounts) for Docker.</p>
+    </div>
+  </section>
+
+  <section id="license">
+    <div class="wrap">
+      <h2>License</h2>
+      <p>MIT — see the <a href="https://github.com/nexus-lab-org/readloom/blob/main/LICENSE">LICENSE</a> file.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:0.75rem; width:100%;">
+      <span>readloom · nexus-lab-org</span>
+      <span>
+        <a href="https://github.com/nexus-lab-org/readloom">GitHub</a> ·
+        <a href="https://www.npmjs.com/package/readloom">npm</a> ·
+        <a href="https://github.com/nexus-lab-org/readloom/issues">Report issues</a>
+      </span>
+    </div>
+  </footer>
+</body>
+</html>
