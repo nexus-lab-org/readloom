@@ -37,8 +37,8 @@ arguments:
 
 ```yaml
 # roots.yml
-teach: /home/asif/teach
-sentinel-services-design: /home/asif/code/oblivious/pivot/sentinel-services/docs/design
+teach: /home/user/teach
+docs: /home/user/code/project/docs/
 ```
 
 ```bash
