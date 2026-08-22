@@ -323,8 +323,6 @@ export function pageTemplate({ title, breadcrumb, body }) {
     position: fixed;
     inset: 0;
     z-index: 1000;
-    height: 100vh;
-    width: 100vw;
     margin: 0;
     border-radius: 0;
   }
