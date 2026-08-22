@@ -316,6 +316,7 @@ export function pageTemplate({ title, breadcrumb, body }) {
   .doc .mermaid svg {
     width: 100%;
     height: 100%;
+    max-width: 100%;
     cursor: grab;
   }
   .doc .mermaid svg:active { cursor: grabbing; }
@@ -323,6 +324,7 @@ export function pageTemplate({ title, breadcrumb, body }) {
     position: fixed;
     inset: 0;
     z-index: 1000;
+    height: auto;
     margin: 0;
     border-radius: 0;
   }
@@ -408,6 +410,11 @@ ${body}
       if (!svg) return;
       svg.removeAttribute('width');
       svg.removeAttribute('height');
+      // mermaid.run() bakes a pixel max-width into the inline style based on
+      // the container's width at first render; that inline value would
+      // otherwise outrank our stylesheet's max-width:100% forever, including
+      // after maximizing to a wider container.
+      svg.style.maxWidth = 'none';
 
       const panZoom = svgPanZoom(svg, {
         zoomEnabled: true,
@@ -443,6 +450,16 @@ ${body}
         else if (action === 'maximize') {
           const isMaximized = container.classList.toggle('maximized');
           document.body.style.overflow = isMaximized ? 'hidden' : '';
+          if (isMaximized) {
+            // Reading clientWidth/Height here forces a synchronous layout,
+            // so this reflects the just-applied overflow:hidden (no scrollbar)
+            // rather than the stale pre-maximize size.
+            container.style.width = document.documentElement.clientWidth + 'px';
+            container.style.height = document.documentElement.clientHeight + 'px';
+          } else {
+            container.style.width = '';
+            container.style.height = '';
+          }
           button.innerHTML = isMaximized ? '✕' : '⛶';
           button.title = isMaximized ? 'Restore' : 'Maximize';
           requestAnimationFrame(refit);
