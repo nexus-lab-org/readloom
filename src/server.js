@@ -13,7 +13,10 @@ function safeJoin(rootPath, restPath) {
   return candidate;
 }
 
-function listDir(rootName, urlPrefix, absPath) {
+const SORT_KEYS = new Set(["name", "mtime"]);
+const SORT_ORDERS = new Set(["asc", "desc"]);
+
+function listDir(rootName, urlPrefix, absPath, sort, order) {
   const entries = fs
     .readdirSync(absPath, { withFileTypes: true })
     .filter((e) => !e.name.startsWith("."))
@@ -24,13 +27,16 @@ function listDir(rootName, urlPrefix, absPath) {
         name: e.name,
         isDir,
         sourceEligible: !isDir && isSourceEligible(fullPath),
+        mtimeMs: fs.statSync(fullPath).mtimeMs,
       };
     })
     .sort((a, b) => {
       if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;
-      return a.name.localeCompare(b.name);
+      const cmp =
+        sort === "mtime" ? a.mtimeMs - b.mtimeMs : a.name.localeCompare(b.name);
+      return order === "desc" ? -cmp : cmp;
     });
-  return renderListing(rootName, urlPrefix, entries);
+  return renderListing(rootName, urlPrefix, entries, sort, order);
 }
 
 /**
@@ -70,7 +76,9 @@ export function createApp(roots) {
 
     if (stat.isDirectory()) {
       const urlPrefix = `/${rootName}/${reqPath ? reqPath.replace(/\/?$/, "/") : ""}`;
-      const body = listDir(rootName, urlPrefix, absPath);
+      const sort = SORT_KEYS.has(req.query.sort) ? req.query.sort : "name";
+      const order = SORT_ORDERS.has(req.query.order) ? req.query.order : "asc";
+      const body = listDir(rootName, urlPrefix, absPath, sort, order);
       res.type("html").send(
         pageTemplate({
           title: `${rootName}/${reqPath}`,

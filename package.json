@@ -1,6 +1,6 @@
 {
   "name": "readloom",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "A generic, multi-root markdown/code/mermaid directory browser.",
   "type": "module",
   "bin": {
