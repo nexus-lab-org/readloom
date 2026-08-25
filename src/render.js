@@ -95,17 +95,50 @@ export function renderRootIndex(rootNames) {
 
 const RENDERABLE_EXTENSIONS = new Set(["html", "htm"]);
 
-export function renderListing(rootName, urlPrefix, entries) {
+function formatMtime(mtimeMs) {
+  const d = new Date(mtimeMs);
+  if (Number.isNaN(d.getTime())) return "";
+  return d
+    .toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    })
+    .replace(",", "");
+}
+
+function sortLinkHtml(urlPrefix, key, label, sort, order) {
+  const isActive = sort === key;
+  const nextOrder = isActive && order === "asc" ? "desc" : "asc";
+  const arrow = isActive ? (order === "asc" ? " ↑" : " ↓") : "";
+  const activeClass = isActive ? " active" : "";
+  return (
+    `<a class="sort-link${activeClass}" href="${urlPrefix}?sort=${key}&order=${nextOrder}">` +
+    `${label}${arrow}</a>`
+  );
+}
+
+export function renderListing(rootName, urlPrefix, entries, sort = "name", order = "asc") {
+  const controls =
+    `<div class="sort-controls">Sort by: ` +
+    `${sortLinkHtml(urlPrefix, "name", "Name", sort, order)}` +
+    `${sortLinkHtml(urlPrefix, "mtime", "Modified", sort, order)}` +
+    `</div>`;
+
   if (entries.length === 0) {
-    return '<div class="empty">-- nothing here --</div>';
+    return controls + '<div class="empty">-- nothing here --</div>';
   }
   const items = entries
-    .map(({ name, isDir, sourceEligible }) => {
+    .map(({ name, isDir, sourceEligible, mtimeMs }) => {
       const label = name + (isDir ? "/" : "");
       const bareHref = `${urlPrefix}${encodeURIComponent(name)}` + (isDir ? "/" : "");
       const ext = path.extname(name).slice(1).toLowerCase();
       const isRenderable = RENDERABLE_EXTENSIONS.has(ext);
       const { label: badgeLabel, css } = badgeFor(name, isDir, sourceEligible);
+      const mtimeHtml = `<span class="mtime">${escapeHtml(formatMtime(mtimeMs))}</span>`;
 
       if (!isDir && sourceEligible && isRenderable) {
         // page has its own rendered form (e.g. .html) — default click opens
@@ -113,6 +146,7 @@ export function renderListing(rootName, urlPrefix, entries) {
         return (
           `<li><span class="badge ${css}">${badgeLabel}</span>` +
           `<a href="${bareHref}">${escapeHtml(label)}</a>` +
+          `${mtimeHtml}` +
           `<a class="view-source" href="${bareHref}?view=source">source</a></li>`
         );
       }
@@ -120,11 +154,12 @@ export function renderListing(rootName, urlPrefix, entries) {
       const href = !isDir && sourceEligible ? `${bareHref}?view=source` : bareHref;
       return (
         `<li><span class="badge ${css}">${badgeLabel}</span>` +
-        `<a href="${href}">${escapeHtml(label)}</a></li>`
+        `<a href="${href}">${escapeHtml(label)}</a>` +
+        `${mtimeHtml}</li>`
       );
     })
     .join("");
-  return `<ul class="listing">${items}</ul>`;
+  return `${controls}<ul class="listing">${items}</ul>`;
 }
 
 export function pageTemplate({ title, breadcrumb, body }) {
@@ -236,8 +271,13 @@ export function pageTemplate({ title, breadcrumb, body }) {
   ul.listing li:last-child { border-bottom: none; }
   ul.listing a { color: var(--text); }
   ul.listing a:hover { color: var(--amber); text-decoration: none; }
-  ul.listing a.view-source {
+  ul.listing .mtime {
     margin-left: auto;
+    flex: none;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  ul.listing a.view-source {
     flex: none;
     font-size: 0.75rem;
     color: var(--text-dim);
@@ -246,6 +286,19 @@ export function pageTemplate({ title, breadcrumb, body }) {
     padding: 0.1rem 0.5rem;
   }
   ul.listing a.view-source:hover { color: var(--amber); border-color: var(--amber); text-decoration: none; }
+
+  .sort-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    padding: 0 0.2rem 0.75rem;
+  }
+  .sort-controls a.sort-link { color: var(--text-dim); }
+  .sort-controls a.sort-link:hover { color: var(--amber); text-decoration: none; }
+  .sort-controls a.sort-link.active { color: var(--blue); }
 
   .badge {
     flex: none;
